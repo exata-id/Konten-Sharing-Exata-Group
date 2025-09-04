@@ -66,8 +66,15 @@
                 </div>
                 <div id="loginError" class="text-red-400 text-sm mt-4 text-center hidden"></div>
                 <button type="submit" id="loginButton" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg mt-6 transition-colors flex items-center justify-center">
-                    <span id="loginButtonText">Masuk</span>
-                    <div id="loginSpinner" class="loader w-6 h-6 border-2 border-white border-t-transparent hidden"></div>
+                </div>
+                <div class="flex items-center justify-between mt-4">
+                    <div class="flex items-center">
+                        <input id="rememberMe" name="rememberMe" type="checkbox" class="h-4 w-4 bg-gray-700 border-gray-600 text-blue-600 focus:ring-blue-500 rounded">
+                        <label for="rememberMe" class="ml-2 block text-sm text-gray-300">Ingat Saya (7 hari)</label>
+                    </div>
+                </div>
+                <div id="loginError" class="text-red-400 text-sm mt-4 text-center hidden"></div>
+                <button type="submit" id="loginButton" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg mt-4 transition-colors flex items-center justify-center">
                 </button>
             </form>
         </div>
@@ -167,6 +174,9 @@
                         <option>Irfan</option>
                         <option>Teddy</option>
                         <option>Raza</option>
+                        <option>Julian</option>
+                        <option>Bintang</option>
+                        <option>Lutfi</option>
                     </select>
                 </div>
                 <div>
@@ -196,6 +206,16 @@
         document.addEventListener('DOMContentLoaded', () => {
             // !!! PENTING: Ganti URL ini dengan URL Web App Anda setelah deploy !!!
             const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw6Pszy0vjz95gVzSk_mNpP3WIT3UFODMX78c7bw1KbCFCZKmVpCD9Ai1z3OreBcVxP4w/exec';
+
+            // --- TAMBAHKAN LOGIKA AUTO LOGIN DI SINI ---
+            const savedUser = JSON.parse(localStorage.getItem('savedUser'));
+            if (savedUser && new Date().getTime() < savedUser.expiry) {
+                // Tampilkan loading dan coba login otomatis
+                document.getElementById('username').value = savedUser.username;
+                document.getElementById('password').value = savedUser.password;
+                document.getElementById('loginButton').click(); // Simulasikan klik pada tombol login
+            }
+            // --- AKHIR LOGIKA AUTO LOGIN ---
 
             const state = {
                 allContent: [],
@@ -427,18 +447,28 @@
                 
                 const username = document.getElementById('username').value;
                 const password = document.getElementById('password').value;
+                const rememberMe = document.getElementById('rememberMe').checked;
                 
                 const result = await callAppsScript('login', { username, password });
 
                 toggleLoginButton(false);
 
                 if (result.success) {
+                    // Jika login berhasil dan "Ingat Saya" dicentang
+                    if (rememberMe) {
+                        const expiry = new Date().getTime() + (7 * 24 * 60 * 60 * 1000); // 7 hari dari sekarang
+                        localStorage.setItem('savedUser', JSON.stringify({ username, password, expiry }));
+                    } else {
+                        localStorage.removeItem('savedUser');
+                    }
+
                     state.currentUser = result.user;
                     loginOverlay.style.display = 'none';
                     appContainer.classList.remove('hidden');
                     welcomeMessage.textContent = `Selamat datang, ${state.currentUser.username} (${state.currentUser.role})!`;
                     await renderDashboard();
                 } else {
+                    localStorage.removeItem('savedUser'); // Hapus jika login gagal
                     loginError.textContent = result.message || 'Username atau password salah.';
                     loginError.classList.remove('hidden');
                 }
