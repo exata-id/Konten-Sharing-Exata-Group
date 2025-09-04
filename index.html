@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dasbor Manajemen Konten</title>
+    <title>Dasbor Manajemen Konten - EXATA GROUP</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -156,8 +156,8 @@
                         </select>
                     </div>
                      <div>
-                        <label for="postingDate" class="block text-sm font-medium text-gray-300 mb-1">Tanggal Posting</label>
-                        <input type="date" id="postingDate" name="postingDate" required class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:ring-2 focus:ring-blue-500">
+                        <label for="postingDate" class="block text-sm font-medium text-gray-300 mb-1">Tanggal & Waktu Posting</label>
+                        <input type="datetime-local" id="postingDate" name="postingDate" required class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:ring-2 focus:ring-blue-500">
                     </div>
                 </div>
                  <div>
@@ -226,6 +226,35 @@
             const modalTitle = document.getElementById('modalTitle');
             const contentIdInput = document.getElementById('contentId');
             const toast = document.getElementById('toast');
+
+            // --- FUNGSI HELPER BARU ---
+            function formatDateTimeWIB(dateString) {
+                if (!dateString) return '';
+                const date = new Date(dateString);
+                const options = {
+                    year: 'numeric', month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit', hour12: false,
+                    timeZone: 'Asia/Jakarta'
+                };
+                const parts = new Intl.DateTimeFormat('id-ID', options).formatToParts(date);
+                const partValue = (type) => parts.find(p => p.type === type)?.value || '';
+                
+                const y = partValue('year');
+                const m = partValue('month');
+                const d = partValue('day');
+                const h = partValue('hour');
+                const min = partValue('minute');
+
+                return `${y}-${m}-${d} ${h}:${min} WIB`;
+            }
+
+            function formatDateWIB(dateString) {
+                 if (!dateString) return '';
+                const date = new Date(dateString);
+                const options = { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'Asia/Jakarta' };
+                const [day, month, year] = new Intl.DateTimeFormat('id-ID', options).format(date).split('/');
+                return `${year}-${month}-${day}`;
+            }
             
             // --- API FUNCTIONS ---
             async function callAppsScript(action, payload = {}) {
@@ -260,8 +289,8 @@
                 const row = document.createElement('tr');
                 row.className = 'hover:bg-gray-700/50 transition-colors';
                 row.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">${item.postingDate}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">${item.submissionDate}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">${formatDateTimeWIB(item.postingDate)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">${formatDateWIB(item.submissionDate)}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-white uppercase">${item.division}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">${item.pic}</td>
                     <td class="px-6 py-4">
@@ -355,7 +384,7 @@
                     modalTitle.textContent = 'Ubah Konten';
                     contentIdInput.value = content.id;
                     document.getElementById('submitterDivision').value = content.division;
-                    document.getElementById('postingDate').value = content.postingDate;
+                    document.getElementById('postingDate').value = content.postingDate.slice(0, 16);
                     document.getElementById('picName').value = content.pic;
                     document.getElementById('contentLink').value = content.contentLink;
                     document.getElementById('caption').value = content.caption;
